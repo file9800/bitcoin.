@@ -1,0 +1,280 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Panel informativo BTC – No custodio</title>
+  <style>
+    :root{
+      --bg:#0f172a; /* slate-900 */
+      --card:#111827ee; /* gray-900 */
+      --muted:#94a3b8; /* slate-400 */
+      --text:#e5e7eb; /* gray-200 */
+      --accent:#22d3ee; /* cyan-400 */
+      --danger:#ef4444; /* red-500 */
+      --ok:#10b981; /* emerald-500 */
+    }
+    *{box-sizing:border-box}
+    body{margin:0;background:radial-gradient(1200px 600px at 20% -10%, #1e293b 0%, #0b1222 35%, #060b16 100%), var(--bg);font-family:ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial;color:var(--text);}
+    .container{max-width:980px;margin:40px auto;padding:16px}
+    .card{background:linear-gradient(180deg, rgba(255,255,255,0.06), rgba(255,255,255,0.02));border:1px solid rgba(255,255,255,0.08);backdrop-filter:blur(6px);border-radius:16px;box-shadow:0 10px 30px rgba(0,0,0,.35)}
+    header{padding:20px 24px;border-bottom:1px solid rgba(255,255,255,.08);display:flex;align-items:center;justify-content:space-between;gap:12px}
+    h1{font-size:20px;margin:0;display:flex;align-items:center;gap:10px}
+    .badge{font-size:12px;color:#06131a;background:var(--accent);padding:4px 8px;border-radius:999px;font-weight:700}
+    .sub{color:var(--muted);font-size:12px;margin-top:6px}
+    .grid{display:grid;grid-template-columns:1.15fr .85fr;gap:18px;padding:18px}
+    @media (max-width:800px){.grid{grid-template-columns:1fr}}
+    .panel{padding:16px;border-top:1px solid rgba(255,255,255,.06)}
+    label{display:block;font-size:12px;color:var(--muted);margin-bottom:6px}
+    input{width:100%;padding:10px 12px;background:#0b1222;border:1px solid rgba(255,255,255,.1);border-radius:10px;color:var(--text)}
+    input::placeholder{color:#64748b}
+    button{cursor:pointer;border:0;border-radius:12px;padding:10px 14px;font-weight:700}
+    .btn-primary{background:var(--accent);color:#062029}
+    .btn-ghost{background:transparent;color:var(--text);border:1px solid rgba(255,255,255,.12)}
+    .btn-danger{background:transparent;color:var(--danger);border:1px solid rgba(239,68,68,.45)}
+    .row{display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px}
+    .actions{display:flex;gap:8px;flex-wrap:wrap}
+    table{width:100%;border-collapse:collapse;}
+    th, td{padding:12px 10px;border-bottom:1px solid rgba(255,255,255,.08);text-align:left}
+    th{font-size:12px;color:var(--muted);font-weight:600}
+    td{font-size:14px}
+    .right{text-align:right}
+    .muted{color:var(--muted)}
+    .totals{display:flex;justify-content:space-between;align-items:center;gap:10px;padding:12px 2px;color:var(--muted)}
+    .pill{border:1px solid rgba(255,255,255,.12);padding:6px 10px;border-radius:999px;font-size:12px}
+    .warn{font-size:12px;color:#fbbf24;background:#2b2105;border:1px solid #946300;padding:10px 12px;border-radius:10px}
+    .success{font-size:12px;color:#bbf7d0;background:#052b22;border:1px solid #0a7e5f;padding:10px 12px;border-radius:10px}
+    .footer{padding:14px 24px;color:var(--muted);font-size:12px}
+    .search{display:flex;gap:10px;align-items:end}
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="card">
+      <header>
+        <div>
+          <h1>Panel informativo de clientes BTC <span class="badge">No custodio</span></h1>
+          <div class="sub">Esta página <strong>no guarda llaves privadas</strong> ni fondos. Los saldos son informados por el cliente o consultados externamente. Úsala solo con fines informativos.</div>
+        </div>
+        <div class="actions">
+          <button class="btn-ghost" id="btnExport">Exportar CSV</button>
+          <button class="btn-danger" id="btnReset">Borrar todo</button>
+        </div>
+      </header>
+
+      <div class="grid">
+        <!-- Formulario -->
+        <section class="panel">
+          <h2 style="margin:0 0 12px 0;font-size:16px">Agregar/editar cliente</h2>
+          <div class="row">
+            <div>
+              <label for="name">Nombre del cliente</label>
+              <input id="name" type="text" placeholder="Ej. Juan Pérez" />
+            </div>
+            <div>
+              <label for="btc">Cantidad de BTC</label>
+              <input id="btc" type="number" step="0.00000001" placeholder="0.00000000" />
+            </div>
+            <div>
+              <label for="addr">Dirección (opcional)</label>
+              <input id="addr" type="text" placeholder="bc1… (solo referencia)" />
+            </div>
+          </div>
+          <div class="actions" style="margin-top:12px">
+            <button class="btn-primary" id="btnSave">Guardar cliente</button>
+            <button class="btn-ghost" id="btnClear">Limpiar</button>
+            <span id="msg" class="success" style="display:none">Guardado</span>
+          </div>
+          <p style="margin-top:12px" class="warn">Sugerencia: verifique saldos en su propio nodo o un explorador (modo solo-lectura). No almacene seeds aquí.</p>
+        </section>
+
+        <!-- Buscador y totales -->
+        <section class="panel">
+          <h2 style="margin:0 0 12px 0;font-size:16px">Búsqueda y totales</h2>
+          <div class="search">
+            <div style="flex:1">
+              <label for="q">Buscar</label>
+              <input id="q" type="text" placeholder="Filtrar por nombre o dirección" />
+            </div>
+            <div>
+              <label for="precision">Precisión de BTC mostrada</label>
+              <input id="precision" type="number" min="0" max="8" value="8" />
+            </div>
+          </div>
+          <div class="totals" style="margin-top:12px">
+            <span class="pill">Clientes: <strong id="count">0</strong></span>
+            <span class="pill">Total BTC: <strong id="total">0</strong></span>
+          </div>
+        </section>
+      </div>
+
+      <!-- Tabla -->
+      <section class="panel" style="padding:0 16px 8px 16px">
+        <div style="overflow:auto;">
+          <table id="tbl">
+            <thead>
+              <tr>
+                <th>#</th>
+                <th>Cliente</th>
+                <th>BTC</th>
+                <th>Dirección</th>
+                <th>Actualizado</th>
+                <th class="right">Acciones</th>
+              </tr>
+            </thead>
+            <tbody>
+            </tbody>
+          </table>
+        </div>
+      </section>
+
+      <div class="footer">© <span id="year"></span> Panel informativo BTC (no custodio). Este software es solo con fines educativos/informativos.</div>
+    </div>
+  </div>
+
+  <script>
+    // --- Utilidades simples ---
+    const $ = (sel) => document.querySelector(sel);
+    const uid = () => Math.random().toString(36).slice(2, 10);
+    const fmt = (n, p=8) => {
+      if (!Number.isFinite(n)) return "0";
+      return Number(n).toLocaleString(undefined, { minimumFractionDigits:p, maximumFractionDigits:p });
+    };
+
+    // --- Estado (localStorage) ---
+    const KEY = 'btc_clients_v1';
+    let editingId = null;
+    const load = () => JSON.parse(localStorage.getItem(KEY) || '[]');
+    const save = (rows) => localStorage.setItem(KEY, JSON.stringify(rows));
+
+    // --- Render de tabla y totales ---
+    function render(){
+      const q = $('#q').value.trim().toLowerCase();
+      const precision = clamp(parseInt($('#precision').value || '8', 10), 0, 8);
+      const tbody = $('#tbl tbody');
+      const rows = load();
+      tbody.innerHTML = '';
+
+      let i = 0, total = 0;
+      for (const row of rows){
+        const match = !q || row.name.toLowerCase().includes(q) || (row.addr || '').toLowerCase().includes(q);
+        if (!match) continue;
+        i++;
+        total += Number(row.btc) || 0;
+        const tr = document.createElement('tr');
+        tr.innerHTML = `
+          <td class="muted">${i}</td>
+          <td>${escapeHtml(row.name)}</td>
+          <td><strong>${fmt(row.btc, precision)}</strong></td>
+          <td class="muted">${row.addr ? `<a href="https://mempool.space/address/${encodeURIComponent(row.addr)}" target="_blank" rel="noreferrer noopener">${escapeHtml(row.addr)}</a>` : '—'}</td>
+          <td class="muted">${new Date(row.updatedAt).toLocaleString()}</td>
+          <td class="right">
+            <div class="actions" style="justify-content:flex-end">
+              <button class="btn-ghost" onclick='onEdit("${row.id}")'>Editar</button>
+              <button class="btn-danger" onclick='onDel("${row.id}")'>Eliminar</button>
+            </div>
+          </td>`;
+        tbody.appendChild(tr);
+      }
+      $('#count').textContent = String(i);
+      $('#total').textContent = fmt(total, precision);
+    }
+
+    function clamp(n, min, max){ return Math.min(Math.max(n, min), max); }
+
+    function escapeHtml(s){
+      return String(s||'').replace(/[&<>"]?/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]||c));
+    }
+
+    // --- Acciones ---
+    function clearForm(){
+      editingId = null;
+      $('#name').value = '';
+      $('#btc').value = '';
+      $('#addr').value = '';
+      $('#msg').style.display = 'none';
+    }
+
+    function onEdit(id){
+      const rows = load();
+      const r = rows.find(x=>x.id===id);
+      if(!r) return;
+      editingId = id;
+      $('#name').value = r.name;
+      $('#btc').value = r.btc;
+      $('#addr').value = r.addr || '';
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+
+    function onDel(id){
+      if(!confirm('¿Eliminar este cliente?')) return;
+      const rows = load().filter(x=>x.id!==id);
+      save(rows);
+      render();
+    }
+
+    function onSave(){
+      const name = $('#name').value.trim();
+      const btc = parseFloat($('#btc').value);
+      const addr = $('#addr').value.trim();
+      if(!name || !Number.isFinite(btc)){
+        alert('Completa nombre y cantidad de BTC válida.');
+        return;
+      }
+      const rows = load();
+      const now = new Date().toISOString();
+      if(editingId){
+        const i = rows.findIndex(x=>x.id===editingId);
+        if(i>=0){ rows[i] = { ...rows[i], name, btc, addr, updatedAt: now }; }
+      }else{
+        rows.unshift({ id: uid(), name, btc, addr, updatedAt: now });
+      }
+      save(rows);
+      $('#msg').style.display = 'inline-block';
+      setTimeout(()=> $('#msg').style.display='none', 1500);
+      clearForm();
+      render();
+    }
+
+    function exportCSV(){
+      const rows = load();
+      const headers = ['id','name','btc','addr','updatedAt'];
+      const lines = [headers.join(',')].concat(
+        rows.map(r => headers.map(h => csvEscape(r[h] ?? '')).join(','))
+      );
+      const blob = new Blob([lines.join('\n')], { type: 'text/csv;charset=utf-8;' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url; a.download = 'clientes_btc.csv';
+      document.body.appendChild(a); a.click(); a.remove();
+      URL.revokeObjectURL(url);
+    }
+
+    function csvEscape(val){
+      const s = String(val);
+      if(/[",\n]/.test(s)) return '"' + s.replace(/"/g,'""') + '"';
+      return s;
+    }
+
+    function resetAll(){
+      if(!confirm('Esto borrará todos los clientes guardados en este navegador.')) return;
+      localStorage.removeItem(KEY);
+      render();
+    }
+
+    // --- Eventos ---
+    $('#btnSave').addEventListener('click', onSave);
+    $('#btnClear').addEventListener('click', clearForm);
+    $('#btnExport').addEventListener('click', exportCSV);
+    $('#btnReset').addEventListener('click', resetAll);
+    $('#q').addEventListener('input', render);
+    $('#precision').addEventListener('input', render);
+
+    // Init
+    document.addEventListener('DOMContentLoaded', ()=>{
+      $('#year').textContent = new Date().getFullYear();
+      render();
+    });
+  </script>
+</body>
+</html>
